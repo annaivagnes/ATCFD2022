@@ -19,6 +19,20 @@ dimensionedScalar nu
     transportProperties
 );
 
+Info<< "Reading field myfield\n" << endl;
+volScalarField myfield
+(
+    IOobject
+    (
+        "myfield",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
 Info<< "Reading field p\n" << endl;
 volScalarField p
 (
@@ -32,6 +46,7 @@ volScalarField p
     ),
     mesh
 );
+
 
 
 Info<< "Reading field U\n" << endl;
@@ -48,8 +63,13 @@ volVectorField U
     mesh
 );
 
+Info<< "Reading diffusivity myD\n" << endl;
+
+dimensionedScalar myD("myD", dimViscosity, transportProperties);
 
 #include "createPhi.H"
+
+#include "createFvOptions.H"
 
 
 label pRefCell = 0;

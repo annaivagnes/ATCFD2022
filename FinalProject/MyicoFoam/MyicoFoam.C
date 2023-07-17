@@ -64,6 +64,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "fvOptions.H"
 #include "pisoControl.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -99,7 +100,6 @@ int main(int argc, char *argv[])
         #include "CourantNo.H"
 
         // Momentum predictor
-
         fvVectorMatrix UEqn
         (
             fvm::ddt(U)
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
         if (piso.momentumPredictor())
         {
-            solve(UEqn == -fvc::grad(p));
+			solve(UEqn == -fvc::grad(p));
         }
 
         // --- PISO loop
@@ -139,9 +139,27 @@ int main(int argc, char *argv[])
                     fvm::laplacian(rAU, p) == fvc::div(phiHbyA)
                 );
 
+				// Transport equation for variable 'myfield' with diffusivity 'myD'
+				fvScalarMatrix myfieldEqn
+				(
+					fvm::ddt(myfield)
+				  + fvm::div(phi, myfield)
+				  - fvm::laplacian(myD, myfield)
+				 ==
+					fvOptions(myfield)
+				);
+
+
+
                 pEqn.setReference(pRefCell, pRefValue);
 
                 pEqn.solve(mesh.solver(p.select(piso.finalInnerIter())));
+
+				// Solve the transport equation
+				myfieldEqn.relax();
+				fvOptions.constrain(myfieldEqn);
+				myfieldEqn.solve();
+				fvOptions.correct(myfield);
 
                 if (piso.finalNonOrthogonalIter())
                 {
